@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mad Multiplication Worksheet</title>
+  <style>
+    /* Page Setup for Landscape Printing */
+    @page {
+      size: landscape;
+      margin: 0.4in;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0;
+      padding: 0.2in;
+      background-color: #f8fafc;
+      color: #1e293b;
+    }
+
+    /* Container Card */
+    .worksheet-container {
+      background-color: #ffffff;
+      border: 3px solid #2563eb;
+      border-radius: 12px;
+      padding: 20px 30px;
+    }
+
+    /* Header Styling */
+    /* Adjust margin-bottom if the questions push onto a new page. */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 12px;
+    }
+
+    .title-area h1 {
+      margin: 0;
+      font-size: 28px;
+      color: #1e40af;
+      letter-spacing: 0.5px;
+    }
+
+    .student-info {
+      display: flex;
+      gap: 25px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #334155;
+    }
+
+    .info-field {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+    }
+
+    .line {
+      display: inline-block;
+      width: 110px;
+      border-bottom: 2px solid #64748b;
+    }
+
+    .line.long {
+      width: 165px;
+    }
+
+    .score-box {
+      background-color: #dbeafe;
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 1px solid #bfdbfe;
+      color: #1e40af;
+    }
+
+    /* Dynamic Grid Layout (Without Boxes) */
+    .grid-container {
+      display: grid;
+      gap: 20px 10px;
+      justify-items: center;
+      align-items: center;
+      width: 100%;
+    }
+
+    /* Individual Vertical Problem Layout */
+    .problem {
+      width: 65px;
+      font-size: 26px; /* Large, crisp font for clarity */
+      font-weight: bold;
+      font-family: 'Courier New', Courier, monospace; /* Monospace keeps numbers aligned neatly */
+      color: #0f172a;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .top-num, .bottom-num {
+      line-height: 1.1;
+      padding-right: 2px;
+    }
+
+    .bottom-row {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid #1e293b;
+      padding-bottom: 2px;
+      margin-bottom: 2px;
+    }
+
+    .operator {
+      color: #2563eb; /* Subtle blue contrast for operator */
+      font-size: 22px;
+      font-family: Arial, sans-serif;
+    }
+
+    .answer-space {
+      height: 32px;
+    }
+
+    /* Controls visible only on screen */
+    .no-print {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .btn {
+      font-family: Arial, sans-serif;
+      font-size: 15px;
+      font-weight: bold;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      margin: 0 5px;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .btn-random { background-color: #2563eb; }
+    .btn-random:hover { background-color: #1d4ed8; }
+    
+    .btn-print { background-color: #16a34a; }
+    .btn-print:hover { background-color: #15803d; }
+
+    /* Clean Print Styles */
+    @media print {
+      body {
+        background-color: #fff;
+        padding: 0;
+      }
+      .worksheet-container {
+        border: none;
+        padding: 0;
+      }
+      .no-print {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Controls for screen view -->
+  <div class="no-print">
+    <button class="btn btn-random" onclick="generateWorksheet()">⚡ Randomize Questions</button>
+    <button class="btn btn-print" onclick="window.print()">🖨️ Print Worksheet</button>
+  </div>
+
+  <!-- Printable Worksheet Container -->
+  <div class="worksheet-container">
+    <div class="header">
+      <div class="title-area">
+        <h1>Mad Multiplication</h1>
+      </div>
+      <div class="student-info">
+        <div class="info-field">Name: <span class="line long"></span></div>
+        <div class="info-field">Date: <span class="line"></span></div>
+        <div class="info-field">Time: <span class="line"></span></div>
+        <div class="info-field score-box">Score: ______ / <span id="max-score">60</span></div>
+      </div>
+    </div>
+
+    <!-- Math Questions Grid -->
+    <div class="grid-container" id="worksheet-grid"></div>
+  </div>
+
+  <script>
+    /******************************************************************
+     * CUSTOMIZABLE CONFIGURATION CONSTANTS
+     * Edit rows, columns, or min/max range here
+     ******************************************************************/
+    const NUM_ROWS = 5;       // Number of rows (e.g. 5, 6, 10)
+    const NUM_COLS = 9;      // Number of columns (e.g. 8, 10)
+    const MIN_NUMBER = 2;     // Lowest multiplication factor
+    const MAX_NUMBER = 12;    // Highest multiplication factor
+    /******************************************************************/
+
+    // Calculate total questions dynamically
+    const TOTAL_PROBLEMS = NUM_ROWS * NUM_COLS;
+
+    /**
+     * Generates a random integer inclusive of min and max
+     */
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    /**
+     * Builds the multiplication worksheet grid dynamically
+     */
+    function generateWorksheet() {
+      const container = document.getElementById('worksheet-grid');
+      const maxScoreElement = document.getElementById('max-score');
+      
+      // Update max score display
+      maxScoreElement.textContent = TOTAL_PROBLEMS;
+
+      // Dynamically adjust CSS grid columns/rows
+      container.style.gridTemplateColumns = `repeat(${NUM_COLS}, 1fr)`;
+      container.style.gridTemplateRows = `repeat(${NUM_ROWS}, 1fr)`;
+
+      // Clear previous grid contents
+      container.innerHTML = '';
+
+      // Generate items
+      for (let i = 0; i < TOTAL_PROBLEMS; i++) {
+        const num1 = getRandomInt(MIN_NUMBER, MAX_NUMBER);
+        const num2 = getRandomInt(MIN_NUMBER, MAX_NUMBER);
+
+        const problemDiv = document.createElement('div');
+        problemDiv.className = 'problem';
+
+        problemDiv.innerHTML = `
+          <div class="top-num">${num1}</div>
+          <div class="bottom-row">
+            <span class="operator">×</span>
+            <span class="bottom-num">${num2}</span>
+          </div>
+          <div class="answer-space"></div>
+        `;
+
+        container.appendChild(problemDiv);
+      }
+    }
+
+    // Initialize layout on page load
+    window.onload = generateWorksheet;
+  </script>
+
+</body>
+</html>
